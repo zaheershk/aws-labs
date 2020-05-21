@@ -143,8 +143,8 @@ services:
       - RP_BINARYSTORE_TYPE=minio
       - RP_BINARYSTORE_MINIO_ENDPOINT=https://reportportal-capstone.s3.us-east-1.amazonaws.com
       - RP_BINARYSTORE_MINIO_REGION=us-east-1
-      - RP_BINARYSTORE_MINIO_ACCESSKEY=AKIA3VAXFZ2W2CCAD6IZ
-      - RP_BINARYSTORE_MINIO_SECRETKEY=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
+      - RP_BINARYSTORE_MINIO_ACCESSKEY=<key>
+      - RP_BINARYSTORE_MINIO_SECRETKEY=<key>
       - RP_SESSION_LIVE=86400 #in seconds
     labels:
       - "traefik.backend=uat"
@@ -185,8 +185,8 @@ services:
       - RP_BINARYSTORE_TYPE=minio
       - RP_BINARYSTORE_MINIO_ENDPOINT=https://reportportal-capstone.s3.us-east-1.amazonaws.com
       - RP_BINARYSTORE_MINIO_REGION=us-east-1
-      - RP_BINARYSTORE_MINIO_ACCESSKEY=AKIA3VAXFZ2W2CCAD6IZ
-      - RP_BINARYSTORE_MINIO_SECRETKEY=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
+      - RP_BINARYSTORE_MINIO_ACCESSKEY=<key>
+      - RP_BINARYSTORE_MINIO_SECRETKEY=<key>
       - LOGGING_LEVEL_ORG_HIBERNATE_SQL=info
       - JAVA_OPTS=-Xmx1g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp  -Dcom.sun.management.jmxremote.rmi.port=12349 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=false  -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=10.6.128.241
     labels:
