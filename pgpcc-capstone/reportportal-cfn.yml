@@ -1,0 +1,382 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "A template to deploy reportportal"
+Parameters:
+  EnvironmentSize:
+    Type: String
+    Default: SMALL
+    AllowedValues:
+      - SMALL
+      - MEDIUM
+      - LARGE
+    Description: Select Environment Size (S,M,L)
+  DBEngineVersion:
+    Type: String
+    Default: "11.4"
+  DBStorageType:
+    Type: String
+    Default: "gp2"
+  DBAllocatedStorage:
+    Type: Number
+    Default: 50
+  DBName:
+    Type: String
+    Default: "{{resolve:ssm:/reportportal/db_name:1}}"
+  DBUser:
+    Type: String
+    Default: "{{resolve:ssm:/reportportal/master_username:1}}"
+  DBPassword:
+    Type: String
+    Default: "{{resolve:ssm-secure:/reportportal/master_password:1}}"
+    NoEcho: True
+Mappings:
+  SubnetConfig:
+    VPC:
+      CIDR: 10.0.0.0/16
+    PublicOne:
+      CIDR: 10.0.0.0/24
+    PublicTwo:
+      CIDR: 10.0.1.0/24
+    PrivateOne:
+      CIDR: 10.0.2.0/24
+    PrivateTwo:
+      CIDR: 10.0.3.0/24
+  RegionMap:
+    us-east-1:
+      AMALINUX: ami-0323c3dd2da7fb37d
+    us-east-2:
+      AMALINUX: ami-0f7919c33c90f5b58
+    us-west-1:
+      AMALINUX: ami-06fcc1f0bc2c8943f
+    us-west-2:
+      AMALINUX: ami-0d6621c01e8c2de2c
+    sa-east-1:
+      AMALINUX: ami-003449ffb2605a74c
+    ca-central-1:
+      AMALINUX: ami-054362537f5132ce2
+    eu-west-1:
+      AMALINUX: ami-06ce3edf0cff21f07
+    eu-west-2:
+      AMALINUX: ami-01a6e31ac994bbc09
+    eu-west-3:
+      AMALINUX: ami-00077e3fed5089981
+    eu-central-1:
+      AMALINUX: ami-076431be05aaf8080
+    ap-southeast-1:
+      AMALINUX: ami-0ec225b5e01ccb706
+    ap-southeast-2:
+      AMALINUX: ami-0970010f37c4f9c8d
+    ap-northeast-1:
+      AMALINUX: ami-0f310fced6141e627
+    ap-northeast-2:
+      AMALINUX: ami-01288945bd24ed49a
+    ap-south-1:
+      AMALINUX: ami-0470e33cd681b2476
+    cn-north-1:
+      AMALINUX: ami-8e6aa0e3
+    eu-north-1:
+      AMALINUX: ami-0b7a46b4bd694e8a6
+  InstanceSize:
+    SMALL:
+      "EC2": "t2.medium"
+      "DB": "db.t2.micro"
+    MEDIUM:
+      "EC2": "t2.large"
+      "DB": "db.t2.small"
+    LARGE:
+      "EC2": "t2.xlarge"
+      "DB": "db.t2.medium"
+Resources:
+  # VPC in which containers will be networked.
+  # It has two public subnets, and two private subnets.
+  # We distribute the subnets across the first two available subnets
+  # for the region, for high availability.
+  VPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      CidrBlock: !FindInMap
+        - SubnetConfig
+        - VPC
+        - CIDR
+  PublicSubnetOne:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone:
+        "Fn::Select":
+          - 0
+          - "Fn::GetAZs":
+              Ref: "AWS::Region"
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap
+        - SubnetConfig
+        - PublicOne
+        - CIDR
+      MapPublicIpOnLaunch: true
+  PublicSubnetTwo:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone:
+        "Fn::Select":
+          - 1
+          - "Fn::GetAZs":
+              Ref: "AWS::Region"
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap
+        - SubnetConfig
+        - PublicTwo
+        - CIDR
+      MapPublicIpOnLaunch: true
+  # Two private subnets where containers will only have private
+  # IP addresses, and will only be reachable by other members of the
+  # VPC
+  PrivateSubnetOne:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone:
+        "Fn::Select":
+          - 0
+          - "Fn::GetAZs":
+              Ref: "AWS::Region"
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap
+        - SubnetConfig
+        - PrivateOne
+        - CIDR
+  PrivateSubnetTwo:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone:
+        "Fn::Select":
+          - 1
+          - "Fn::GetAZs":
+              Ref: "AWS::Region"
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap
+        - SubnetConfig
+        - PrivateTwo
+        - CIDR
+  # Subnet Group for RDS instance
+  DBSubnetGroup:
+    Properties:
+      DBSubnetGroupDescription: DBSubnetGroup for RDS instances
+      SubnetIds:
+        - Ref: PrivateSubnetOne
+        - Ref: PrivateSubnetTwo
+    Type: AWS::RDS::DBSubnetGroup
+  # Setup networking resources for the public subnets.
+  # Containers in the public subnets have public IP addresses and the routing table
+  # sends network traffic via the internet gateway.
+  InternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+  GatewayAttachement:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  PublicRouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+  PublicRoute:
+    Type: "AWS::EC2::Route"
+    DependsOn: GatewayAttachement
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnetOneRouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref PublicSubnetOne
+      RouteTableId: !Ref PublicRouteTable
+  PublicSubnetTwoRouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref PublicSubnetTwo
+      RouteTableId: !Ref PublicRouteTable
+  # Setup networking resources for the private subnets.
+  # Containers in these subnets have only private IP addresses, and must use a NAT
+  # gateway to talk to the internet. We launch two NAT gateways, one for each private subnet.
+  NatGatewayOneAttachment:
+    Type: "AWS::EC2::EIP"
+    DependsOn: GatewayAttachement
+    Properties:
+      Domain: vpc
+  NatGatewayTwoAttachment:
+    Type: "AWS::EC2::EIP"
+    DependsOn: GatewayAttachement
+    Properties:
+      Domain: vpc
+  NatGatewayOne:
+    Type: "AWS::EC2::NatGateway"
+    Properties:
+      AllocationId: !GetAtt
+        - NatGatewayOneAttachment
+        - AllocationId
+      SubnetId: !Ref PublicSubnetOne
+  NatGatewayTwo:
+    Type: "AWS::EC2::NatGateway"
+    Properties:
+      AllocationId: !GetAtt
+        - NatGatewayTwoAttachment
+        - AllocationId
+      SubnetId: !Ref PublicSubnetTwo
+  PrivateRouteTableOne:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+  PrivateRouteOne:
+    Type: "AWS::EC2::Route"
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableOne
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayOne
+  PrivateRouteTableOneAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableOne
+      SubnetId: !Ref PrivateSubnetOne
+  PrivateRouteTableTwo:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+  PrivateRouteTwo:
+    Type: "AWS::EC2::Route"
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableTwo
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayTwo
+  PrivateRouteTableTwoAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableTwo
+      SubnetId: !Ref PrivateSubnetTwo
+  # Security Group for SSH and 8080 Port from the VPC only
+  SSHSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: "Allows SSH access"
+      GroupName: "Allows SSH access"
+      SecurityGroupIngress:
+        - CidrIp: "10.0.0.0/16"
+          Description: "SSH from public-instance within VPC"
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: tcp
+        - CidrIp: "10.0.0.0/16"
+          Description: "8080 port for load balancer"
+          FromPort: 8080
+          ToPort: 8080
+          IpProtocol: tcp
+  # Security Group for RDS and 5432 Port from the VPC only
+  DBSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: "Allows RDS access"
+      GroupName: "Allows RDS access"
+      SecurityGroupIngress:
+        - CidrIp: "10.0.0.0/16"
+          Description: "Access RDS from within VPC"
+          FromPort: 5432
+          ToPort: 5432
+          IpProtocol: tcp
+  # ReportPortal Main EC2 Instance
+  ReportPortalEC2:
+    Type: "AWS::EC2::Instance"
+    DeletionPolicy: Delete
+    DependsOn: ReportPortalDB
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX] # Dynamic mapping + Pseudo Parameter
+      InstanceType: !FindInMap [InstanceSize, !Ref EnvironmentSize, EC2]
+      KeyName: ReportPortal
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref SSHSecurityGroup
+          DeviceIndex: "0"
+          DeleteOnTermination: true
+          SubnetId: !Ref PrivateSubnetOne
+      Tags:
+        - Key: Name
+          Value: "ReportPortal"
+      UserData:
+        "Fn::Base64": !Sub |
+          #!/bin/bash
+          yum update -y aws-cfn-bootstrap # good practice - always do this.
+          /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ReportPortalEC2 --configsets reportportal --region ${AWS::Region}
+          yum update -y
+          sudo curl -L "https://github.com/docker/compose/releases/download/1.25.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ReportPortalEC2 --region ${AWS::Region}
+    CreationPolicy:
+      ResourceSignal:
+        Count: "1"
+        Timeout: PT15M
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          reportportal:
+            - "configure-cfn"
+            - "install_docker"
+        configure-cfn:
+          files:
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.EC2.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ReportPortalEC2 --configsets reportportal --region ${AWS::Region}
+              mode: "000400"
+              owner: root
+              group: root
+            /etc/cfn/cfn-hup.conf:
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+                verbose=true
+                interval=5
+              mode: "000400"
+              owner: root
+              group: root
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: "true"
+                ensureRunning: "true"
+                files:
+                  - "/etc/cfn/cfn-hup.conf"
+                  - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+        install_docker:
+          packages:
+            yum:
+              docker: []
+          commands:
+            docker_for_ec2_user:
+              command: usermod -a -G docker ec2-user
+          services:
+            sysvinit:
+              docker:
+                enabled: "true"
+                ensureRunning: "true"
+  # ReportPortal RDS postgres DB
+  ReportPortalDB:
+    Properties:
+      DBInstanceIdentifier: "reportportal-db"
+      DBName: !Ref DBName
+      AllocatedStorage: !Ref DBAllocatedStorage
+      DBInstanceClass: !FindInMap [InstanceSize, !Ref EnvironmentSize, DB]
+      StorageType: !Ref DBStorageType
+      Engine: "postgres"
+      EngineVersion: !Ref DBEngineVersion
+      MasterUsername: !Ref DBUser
+      MasterUserPassword: !Ref DBPassword
+      Tags:
+        - Key: Name
+          Value: "ReportPortal RDS PostgreSQL"
+      VPCSecurityGroups:
+        - !Ref DBSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+    Type: AWS::RDS::DBInstance
