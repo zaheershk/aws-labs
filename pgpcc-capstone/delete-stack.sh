@@ -13,8 +13,8 @@ aws ssm delete-parameter \
 	
 aws ssm delete-parameter \
     --name /reportportal/master_password
-	
-echo " `date` : part 3 - deleting AWS EC2 key-pair "
-aws ec2 delete-key-pair --key-name ReportPortal
 
+aws ssm delete-parameter \
+    --name /reportportal/bucket_name
+	
 echo " `date` : stack deleted successfully "

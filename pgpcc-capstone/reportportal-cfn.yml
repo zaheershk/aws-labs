@@ -12,22 +12,33 @@ Parameters:
   DBEngineVersion:
     Type: String
     Default: "11.4"
-  DBStorageType:
-    Type: String
-    Default: "gp2"
+    Description: Postgres DB engine version
   DBAllocatedStorage:
     Type: Number
     Default: 50
+    Description: Storage size in GiB for Postgres DB
   DBName:
     Type: String
     Default: "{{resolve:ssm:/reportportal/db_name:1}}"
+    Description: Name for Postgres DB
   DBUser:
     Type: String
     Default: "{{resolve:ssm:/reportportal/master_username:1}}"
+    Description: Username for Postgres DB master account
   DBPassword:
     Type: String
     Default: "{{resolve:ssm-secure:/reportportal/master_password:1}}"
     NoEcho: True
+    Description: Password for Postgres DB master account
+  S3BucketName:
+    Type: String
+    Default: "{{resolve:ssm:/reportportal/bucket_name:1}}"
+    Description: Name for S3 bucket
+  ReportPortalCert:
+    Description: ReportPortal SSL Certificate ARN
+    Type: String
+    Default: "TODO: use actual certificate"
+    ConstraintDescription: Must be a valid Certificate ARN
 Mappings:
   SubnetConfig:
     VPC:
@@ -40,6 +51,8 @@ Mappings:
       CIDR: 10.0.2.0/24
     PrivateTwo:
       CIDR: 10.0.3.0/24
+    ALB:
+      CIDR: 0.0.0.0/0
   RegionMap:
     us-east-1:
       AMALINUX: ami-0323c3dd2da7fb37d
@@ -156,14 +169,6 @@ Resources:
         - SubnetConfig
         - PrivateTwo
         - CIDR
-  # Subnet Group for RDS instance
-  DBSubnetGroup:
-    Properties:
-      DBSubnetGroupDescription: DBSubnetGroup for RDS instances
-      SubnetIds:
-        - Ref: PrivateSubnetOne
-        - Ref: PrivateSubnetTwo
-    Type: AWS::RDS::DBSubnetGroup
   # Setup networking resources for the public subnets.
   # Containers in the public subnets have public IP addresses and the routing table
   # sends network traffic via the internet gateway.
@@ -270,19 +275,6 @@ Resources:
           FromPort: 8080
           ToPort: 8080
           IpProtocol: tcp
-  # Security Group for RDS and 5432 Port from the VPC only
-  DBSecurityGroup:
-    Type: "AWS::EC2::SecurityGroup"
-    Properties:
-      VpcId: !Ref VPC
-      GroupDescription: "Allows RDS access"
-      GroupName: "Allows RDS access"
-      SecurityGroupIngress:
-        - CidrIp: "10.0.0.0/16"
-          Description: "Access RDS from within VPC"
-          FromPort: 5432
-          ToPort: 5432
-          IpProtocol: tcp
   # ReportPortal Main EC2 Instance
   ReportPortalEC2:
     Type: "AWS::EC2::Instance"
@@ -300,7 +292,7 @@ Resources:
           SubnetId: !Ref PrivateSubnetOne
       Tags:
         - Key: Name
-          Value: "ReportPortal"
+          Value: "ReportPortal EC2"
       UserData:
         "Fn::Base64": !Sub |
           #!/bin/bash
@@ -309,6 +301,7 @@ Resources:
           yum update -y
           sudo curl -L "https://github.com/docker/compose/releases/download/1.25.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
+          sysctl -w vm.max_map_count=262144
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ReportPortalEC2 --region ${AWS::Region}
     CreationPolicy:
       ResourceSignal:
@@ -361,14 +354,37 @@ Resources:
               docker:
                 enabled: "true"
                 ensureRunning: "true"
+  # Subnet Group for RDS instance
+  DBSubnetGroup:
+    Properties:
+      DBSubnetGroupDescription: DBSubnetGroup for RDS instances
+      SubnetIds:
+        - Ref: PrivateSubnetOne
+        - Ref: PrivateSubnetTwo
+    Type: AWS::RDS::DBSubnetGroup
+  # Security Group for RDS and 5432 Port from the VPC only
+  DBSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: "Allows RDS access"
+      GroupName: "Allows RDS access"
+      SecurityGroupIngress:
+        - CidrIp: "10.0.0.0/16"
+          Description: "Access RDS from within VPC"
+          FromPort: 5432
+          ToPort: 5432
+          IpProtocol: tcp
   # ReportPortal RDS postgres DB
   ReportPortalDB:
+    Type: "AWS::RDS::DBInstance"
+    DependsOn: S3User
     Properties:
       DBInstanceIdentifier: "reportportal-db"
       DBName: !Ref DBName
       AllocatedStorage: !Ref DBAllocatedStorage
       DBInstanceClass: !FindInMap [InstanceSize, !Ref EnvironmentSize, DB]
-      StorageType: !Ref DBStorageType
+      StorageType: "gp2"
       Engine: "postgres"
       EngineVersion: !Ref DBEngineVersion
       MasterUsername: !Ref DBUser
@@ -379,4 +395,148 @@ Resources:
       VPCSecurityGroups:
         - !Ref DBSecurityGroup
       DBSubnetGroupName: !Ref DBSubnetGroup
-    Type: AWS::RDS::DBInstance
+  # ReportPortal S3 Access Role
+  ReportPortalS3Role:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - s3.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+  # ReportPortal S3 Bucket for Binary Storage
+  ReportPortalS3Bucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Ref S3BucketName
+  # ReportPortal S3 Username
+  S3User:
+    Type: "AWS::IAM::User"
+    DependsOn: ReportPortalS3Role
+    Properties:
+      UserName: s3-cfn-user
+  S3UserKey:
+    Type: "AWS::IAM::AccessKey"
+    Properties:
+      UserName: !Ref S3User
+  # ReportPortal S3 policy
+  S3ReportPortalPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: S3RPPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "s3:*"
+            Resource:
+              - !GetAtt ReportPortalS3Bucket.Arn
+              - !Join ["", [!GetAtt ReportPortalS3Bucket.Arn, "/*"]]
+      Roles:
+        - !Ref ReportPortalS3Role
+      Users:
+        - !Ref S3User
+  # Security Group for Application Load Balancer
+  ALBSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Enable HTTP/HTTPS access
+      SecurityGroupIngress:
+        - IpProtocol: "tcp"
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !FindInMap
+            - SubnetConfig
+            - ALB
+            - CIDR
+        - IpProtocol: "tcp"
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !FindInMap
+            - SubnetConfig
+            - ALB
+            - CIDR
+      Tags:
+        - Key: Name
+          Value: "ReportPortal ALB SG"
+  # ReportPortal Application Load Balancer
+  WebAppALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      IpAddressType: ipv4
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Subnets:
+        - !Ref PublicSubnetOne
+        - !Ref PublicSubnetTwo
+      Tags:
+        - Key: Name
+          Value: "ReportPortal ALB"
+      Type: application
+  # ReportPortal ALB Target Group for HTTP
+  WebAppTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      Protocol: "HTTP"
+      VpcId: !Ref VPC
+      Targets:
+        - Id: !Ref ReportPortalEC2
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckPort: "80"
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Tags:
+        - Key: Name
+          Value: "ReportPortal ALB TG HTTP"
+  # ReportPortal ALB Target Group for HTTPS
+  WebAppSecureTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 443
+      Protocol: "HTTPS"
+      VpcId: !Ref VPC
+      Targets:
+        - Id: !Ref ReportPortalEC2
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckPort: "443"
+      HealthCheckProtocol: HTTPS
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Tags:
+        - Key: Name
+          Value: "ReportPortal ALB TG HTTPS"
+  # ReportPortal ALB Listener for HTTP
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn:
+            Ref: WebAppTargetGroup
+      LoadBalancerArn:
+        Ref: WebAppALB
+      Port: 80
+      Protocol: HTTP
+  # # ReportPortal ALB Listener for HTTPS -- TODO: commented now as we dont have valid certificate yet
+  # SecureListener:
+  #   Type: AWS::ElasticLoadBalancingV2::Listener
+  #   Properties:
+  #     DefaultActions:
+  #       - Type: forward
+  #         TargetGroupArn:
+  #           Ref: WebAppSecureTargetGroup
+  #     LoadBalancerArn:
+  #       Ref: WebAppALB
+  #     Port: 443
+  #     Protocol: HTTPS
+  #     Certificates:
+  #       - CertificateArn: !Ref ReportPortalCert
