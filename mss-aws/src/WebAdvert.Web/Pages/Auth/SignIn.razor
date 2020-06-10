@@ -1,0 +1,79 @@
+﻿@page "/Auth/SignIn"
+
+@using WebAdvert.Web.Data
+@using WebAdvert.Web.Models.Auth
+@inject NavigationManager NavigationManager
+@inject AuthService AuthService
+
+<h3>Sign In</h3>
+<p>Sign In to the WebAdvert system.</p>
+<br />
+<h5>If you are not a member, you can Sign Up <a href="/auth/signup">here</a>.</h5>
+
+<EditForm EditContext="@editContext" OnSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="form-group row mb-1">
+        <label class="col-sm-1 col-form-label" for="email">Email: </label>
+        <div class="col-sm-3">
+            <InputText id="email" Class="form-control" @bind-Value="signIn.Email" />
+            <ValidationMessage For="@(() => signIn.Email)" />
+        </div>
+    </div>
+
+    <div class="form-group row mb-1">
+        <label class="col-sm-1 col-form-label" for="password">Password: </label>
+        <div class="col-sm-3">
+            <InputText id="password" Class="form-control" @bind-Value="signIn.Password" />
+            <ValidationMessage For="@(() => signIn.Password)" />
+        </div>
+    </div>
+
+    <div class="form-group row mb-1">
+        <label class="col-sm-1 col-form-label" for="rememberme">Remember Me: </label>
+        <div class="col-sm-1">
+            <InputCheckbox id="rememberMe" Class="form-control" @bind-Value="signIn.RememberMe" />
+            <ValidationMessage For="@(() => signIn.RememberMe)" />
+        </div>
+    </div>
+
+    <br />
+    <div class="form-group row mb-1">
+        <div class="col-sm-2">
+            <button type="submit" id="btnSignIn" class="btn btn-primary">Sign In</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    private SignInModel signIn = new SignInModel();
+    private EditContext editContext;
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(signIn);
+    }
+
+    private async Task HandleSubmit()
+    {
+        var isValid = editContext.Validate() && await ServerValidate(editContext);
+        if (isValid)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task<bool> ServerValidate(EditContext editContext)
+    {
+        var result = await AuthService.LoginUser((SignInModel)editContext.Model);
+
+        if (!result.Object)
+        {
+            ValidationMessageStore messageStore = new ValidationMessageStore(editContext);
+            messageStore.Add(editContext.Field("Email"), result.Errors);
+            editContext.NotifyValidationStateChanged();
+        }
+
+        return result.Object;
+    }
+}

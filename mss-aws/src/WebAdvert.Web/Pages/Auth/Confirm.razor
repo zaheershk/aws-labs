@@ -1,0 +1,69 @@
+﻿@page "/Auth/Confirm"
+
+@using WebAdvert.Web.Data
+@using WebAdvert.Web.Models.Auth
+@inject NavigationManager NavigationManager
+@inject AuthService AuthService
+
+<h3>Confirm</h3>
+<p>Confirm user for the WebAdvert system.</p>
+
+<EditForm EditContext="@editContext" OnSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="form-group row mb-1">
+        <label class="col-sm-1 col-form-label" for="email">Email: </label>
+        <div class="col-sm-3">
+            <InputText id="email" Class="form-control" @bind-Value="confirm.Email" />
+            <ValidationMessage For="@(() => confirm.Email)" />
+        </div>
+    </div>
+
+    <div class="form-group row mb-1">
+        <label class="col-sm-1 col-form-label" for="name">Code: </label>
+        <div class="col-sm-3">
+            <InputText id="code" Class="form-control" @bind-Value="confirm.Code" />
+            <ValidationMessage For="@(() => confirm.Code)" />
+        </div>
+    </div>
+
+    <br />
+    <div class="form-group row mb-1">
+        <div class="col-sm-2">
+            <button type="submit" id="btnConfirm" class="btn btn-primary">Confirm</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    private ConfirmModel confirm = new ConfirmModel();
+    private EditContext editContext;
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(confirm);
+    }
+
+    private async Task HandleSubmit()
+    {
+        var isValid = editContext.Validate() && await ServerValidate(editContext);
+        if (isValid)
+        {
+            NavigationManager.NavigateTo("/auth/signin");
+        }
+    }
+
+    private async Task<bool> ServerValidate(EditContext editContext)
+    {
+        var result = await AuthService.ConfirmUser((ConfirmModel)editContext.Model);
+
+        if (!result.Object)
+        {
+            ValidationMessageStore messageStore = new ValidationMessageStore(editContext);
+            messageStore.Add(editContext.Field("Email"), result.Errors);
+            editContext.NotifyValidationStateChanged();
+        }
+
+        return result.Object;
+    }
+}
