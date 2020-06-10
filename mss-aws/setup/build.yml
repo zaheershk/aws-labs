@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Template to deploy web-advert microservices on AWS stack"
+Resources:
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UsernameAttributes:
+        - email
+      UsernameConfiguration:
+        CaseSensitive: False
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: False
+      AutoVerifiedAttributes:
+        - email
+      MfaConfiguration: "OFF"
+      Schema:
+        - AttributeDataType: String
+          DeveloperOnlyAttribute: False
+          Mutable: False
+          Name: name
+          Required: True
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: False
+          RequireNumbers: False
+          RequireSymbols: False
+          RequireUppercase: False
+          TemporaryPasswordValidityDays: 7
+      UserPoolName: up-webadvert
+  CognitoUserPoolAppClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: appclient-webadvert-browser
+      UserPoolId: !Ref CognitoUserPool
+      ExplicitAuthFlows:
+        - ALLOW_ADMIN_USER_PASSWORD_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+      GenerateSecret: true
+      PreventUserExistenceErrors: ENABLED
+Outputs:
+  CognitoUserPool:
+    Value: !Ref CognitoUserPool
+    Description: ID of CognitoUserPool
+  CognitoUserPoolAppClient:
+    Value: !Ref CognitoUserPoolAppClient
+    Description: ID of CognitoUserPoolAppClient
