@@ -1,0 +1,44 @@
+﻿@page "/Auth/SignIn"
+
+@model WebAdvert.App.Pages.Auth.SignInModel
+@{
+    ViewData["Title"] = "SignIn";
+}
+
+<h1>SignIn</h1>
+<p>Sign In to the WebAdvert system.</p>
+<br />
+<h5>If you are not a member, you can Sign Up <a href="/auth/signup">here</a>.</h5>
+
+<form method="post">
+    <div class="form-group row mb-1">
+        <label class="col-sm-1 col-form-label" asp-for="Input.Email"></label>
+        <div class="col-sm-3">
+            <input id="email" class="form-control" asp-for="Input.Email" />
+            <span asp-validation-for="Input.Email"></span>
+        </div>
+    </div>
+
+    <div class="form-group row mb-1">
+        <label class="col-sm-1 col-form-label" asp-for="Input.Password"></label>
+        <div class="col-sm-3">
+            <input id="password" class="form-control" asp-for="Input.Password" />
+            <span asp-validation-for="Input.Password"></span>
+        </div>
+    </div>
+
+    <div class="form-group row mb-1">
+        <label class="col-sm-1 col-form-label" asp-for="Input.RememberMe"></label>
+        <div class="col-sm-1">
+            <input type="checkbox" id="rememberMe" Class="form-control" asp-for="Input.RememberMe" />
+        </div>
+    </div>
+
+    <br />
+    <div class="form-group row mb-1">
+        <div class="col-sm-2">
+            <button type="submit" id="btnSignIn" class="btn btn-primary">Sign In</button>
+        </div>
+    </div>
+</form>
+

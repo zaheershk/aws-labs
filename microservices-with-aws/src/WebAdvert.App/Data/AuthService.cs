@@ -1,12 +1,12 @@
 ﻿using System.Threading.Tasks;
-using WebAdvert.Web.Models;
-using WebAdvert.Web.Models.Auth;
+using WebAdvert.App.Models;
+using WebAdvert.App.Models.Auth;
 using Microsoft.AspNetCore.Identity;
 using Amazon.Extensions.CognitoAuthentication;
 using Amazon.AspNetCore.Identity.Cognito;
 using System.Linq;
 
-namespace WebAdvert.Web.Data
+namespace WebAdvert.App.Data
 {
     public class AuthService
     {

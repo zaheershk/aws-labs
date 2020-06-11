@@ -2,7 +2,7 @@
 
 namespace WebAdvert.Web.Models.Auth
 {
-    public class SignInModel
+    public class SignInViewModel
     {
         [Required]
         [EmailAddress]
