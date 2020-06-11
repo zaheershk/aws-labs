@@ -25,7 +25,14 @@ namespace WebAdvert.App
 
             services.AddCognitoIdentity();
 
-            services.AddRazorPages();
+            services.ConfigureApplicationCookie(options => { options.LoginPath = "/auth/signin"; });
+
+            services.AddRazorPages().AddRazorPagesOptions(options =>
+            {
+                options.Conventions.AuthorizePage("/Index");
+                options.Conventions.AllowAnonymousToFolder("/Pages/Auth");
+            });
+
             services.AddServerSideBlazor();
 
             services.AddScoped<AuthService>();

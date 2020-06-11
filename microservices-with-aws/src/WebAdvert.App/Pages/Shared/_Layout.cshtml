@@ -1,4 +1,12 @@
-﻿<!DOCTYPE html>
+﻿@using Amazon.Extensions.CognitoAuthentication
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<CognitoUser> UserManager
+@{
+    var user = await UserManager.GetUserAsync(User);
+    var displayName = user.Attributes["name"];
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -29,6 +37,9 @@
                             <a class="nav-link text-dark" asp-area="" asp-page="/auth/signin">Sign In</a>
                         </li>
                     </ul>
+                </div>
+                <div>
+                    <p>@displayName</p>
                 </div>
             </div>
         </nav>
