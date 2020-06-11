@@ -2,7 +2,7 @@
 
 namespace WebAdvert.App.Models.Auth
 {
-    public class SignUpModel
+    public class SignUpViewModel
     {
         [Required]
         [StringLength(200, ErrorMessage = "Name cannot exceed 200 characters!")]

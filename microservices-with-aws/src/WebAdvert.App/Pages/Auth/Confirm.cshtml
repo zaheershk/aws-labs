@@ -1,13 +1,11 @@
-﻿@page "/Auth/SignIn"
+﻿@page "/Auth/Confirm"
 
-@model WebAdvert.App.Pages.Auth.SignInModel
+@model WebAdvert.App.Pages.Auth.ConfirmModel
 @{
-    ViewData["Title"] = "Sign In";
+    ViewData["Title"] = "Confirm Account";
 }
 
-<h1>Sign In</h1>
-<br />
-<h5>If you are not a member, you can Sign Up <a href="/auth/signup">here</a>.</h5>
+<h1>Confirm Account</h1>
 <br />
 
 <form method="post">
@@ -20,18 +18,17 @@
     </div>
 
     <div class="form-group row mb-1">
-        <label class="col-sm-2 col-form-label" asp-for="Input.Password"></label>
+        <label class="col-sm-2 col-form-label" asp-for="Input.Code"></label>
         <div class="col-sm-3">
-            <input class="form-control" asp-for="Input.Password" />
-            <span class="text-danger" asp-validation-for="Input.Password"></span>
+            <input class="form-control" asp-for="Input.Code" />
+            <span class="text-danger" asp-validation-for="Input.Code"></span>
         </div>
     </div>
 
     <br />
     <div class="form-group row mb-1">
         <div class="col-sm-2">
-            <button type="submit" class="btn btn-primary">Sign In</button>
+            <button type="submit" class="btn btn-primary">Sign Up</button>
         </div>
     </div>
 </form>
-

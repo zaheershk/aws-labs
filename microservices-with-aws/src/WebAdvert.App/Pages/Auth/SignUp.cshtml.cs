@@ -8,21 +8,26 @@ using WebAdvert.App.Models.Auth;
 
 namespace WebAdvert.App.Pages.Auth
 {
-    public class SignInModel : PageModel
+    public class SignUpModel : PageModel
     {
         private readonly AuthService _authService;
 
-        public SignInModel(AuthService authService)
+        public SignUpModel(AuthService authService)
         {
             _authService = authService;
         }
 
         [BindProperty]
-        public SignInViewModel Input { get; set; }
+        public SignUpViewModel Input { get; set; }
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
+            if (User.Identity.IsAuthenticated)
+            {
+                return RedirectToPage("/Index");
+            }
 
+            return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -30,7 +35,7 @@ namespace WebAdvert.App.Pages.Auth
             var isValid = ModelState.IsValid && await ExecuteAsync();
             if (isValid)
             {
-                return RedirectToPage("/Index");
+                return RedirectToPage("/auth/confirm");
             }
 
             // If we got this far, something failed, redisplay form
@@ -39,7 +44,7 @@ namespace WebAdvert.App.Pages.Auth
 
         private async Task<bool> ExecuteAsync()
         {
-            var result = await _authService.LoginUser(Input);
+            var result = await _authService.RegisterUser(Input);
 
             if (result.Object || result.Errors == null || !result.Errors.Any())
                 return result.Object;

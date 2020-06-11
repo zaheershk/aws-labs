@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace WebAdvert.Web.Models.Auth
+namespace WebAdvert.App.Models.Auth
 {
-    public class ConfirmModel
+    public class ConfirmViewModel
     {
         [Required]
         [EmailAddress]

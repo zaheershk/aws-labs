@@ -21,7 +21,7 @@ namespace WebAdvert.App.Data
             _cognitoUserPool = cognitoUserPool;
         }
 
-        public async Task<ServiceResponse<bool>> RegisterUser(SignUpModel model)
+        public async Task<ServiceResponse<bool>> RegisterUser(SignUpViewModel model)
         {
             // fetch user
             var user = _cognitoUserPool.GetUser(model.Email);
@@ -36,7 +36,7 @@ namespace WebAdvert.App.Data
                 : new ServiceResponse<bool>(false, createdResult.Errors.Select(x => x.Description).ToList());
         }
 
-        public async Task<ServiceResponse<bool>> ConfirmUser(ConfirmModel model)
+        public async Task<ServiceResponse<bool>> ConfirmUser(ConfirmViewModel model)
         {
             // fetch user
             var user = await _userManager.FindByIdAsync(model.Email);

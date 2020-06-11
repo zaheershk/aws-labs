@@ -8,29 +8,24 @@ using WebAdvert.App.Models.Auth;
 
 namespace WebAdvert.App.Pages.Auth
 {
-    public class SignInModel : PageModel
+    public class ConfirmModel : PageModel
     {
         private readonly AuthService _authService;
 
-        public SignInModel(AuthService authService)
+        public ConfirmModel(AuthService authService)
         {
             _authService = authService;
         }
 
         [BindProperty]
-        public SignInViewModel Input { get; set; }
-
-        public void OnGet()
-        {
-
-        }
+        public ConfirmViewModel Input { get; set; }
 
         public async Task<IActionResult> OnPostAsync()
         {
             var isValid = ModelState.IsValid && await ExecuteAsync();
             if (isValid)
             {
-                return RedirectToPage("/Index");
+                return RedirectToPage("/auth/signin");
             }
 
             // If we got this far, something failed, redisplay form
@@ -39,14 +34,14 @@ namespace WebAdvert.App.Pages.Auth
 
         private async Task<bool> ExecuteAsync()
         {
-            var result = await _authService.LoginUser(Input);
+            var result = await _authService.ConfirmUser(Input);
 
             if (result.Object || result.Errors == null || !result.Errors.Any())
                 return result.Object;
 
             foreach (var error in result.Errors)
             {
-                var propName = error.Contains("password", StringComparison.OrdinalIgnoreCase) ? "Password" : "Email";
+                var propName = error.Contains("code", StringComparison.OrdinalIgnoreCase) ? "Code" : "Email";
                 ModelState.AddModelError($"Input.{propName}", error);
             }
 
