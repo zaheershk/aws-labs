@@ -61,11 +61,25 @@ namespace WebAdvert.App.Data
                 return new ServiceResponse<bool>(false, $"User with {model.Email} email address was not found!");
             }
 
-            // confirm user
+            // login user
             var loginResult = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false).ConfigureAwait(false);
             return loginResult.Succeeded
                 ? new ServiceResponse<bool>(true, "User logged in!")
                 : new ServiceResponse<bool>(false, "Login failed!");
+        }
+
+        public async Task<ServiceResponse<bool>> LogoutUser()
+        {
+            try
+            {
+                // logout user
+                await _signInManager.SignOutAsync();
+                return new ServiceResponse<bool>(true, "User logged out!");
+            }
+            catch
+            {
+                return new ServiceResponse<bool>(false, "Logout failed!");
+            }
         }
     }
 }
