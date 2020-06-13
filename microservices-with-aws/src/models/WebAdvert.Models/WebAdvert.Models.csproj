@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Authors>zaheershk</Authors>
+    <Product>Saaz (WebAdvert Microservices)</Product>
+    <Company></Company>
+    <PackageProjectUrl>https://github.com/zaheershk/aws-labs/tree/master/microservices-with-aws</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/zaheershk/aws-labs</RepositoryUrl>
+    <Description>Nuget package for WebAdvert domain models</Description>
+    <PackageId>Saaz.Models.WebAdvert</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+  </ItemGroup>
+
+</Project>
