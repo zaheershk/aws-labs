@@ -4,7 +4,7 @@ using WebAdvert.Models;
 
 namespace WebAdvert.Data.Models
 {
-    [DynamoDBTable("Adverts")]
+    [DynamoDBTable("sz-webadvert-adverts")]
     public class AdvertDao
     {
         [DynamoDBHashKey] 

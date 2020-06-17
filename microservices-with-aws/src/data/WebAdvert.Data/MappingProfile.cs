@@ -2,11 +2,11 @@
 using WebAdvert.Data.Models;
 using WebAdvert.Models;
 
-namespace WebAdvert.API.Models
+namespace WebAdvert.Data
 {
-    public class AdvertProfile : Profile
+    public class MappingProfile : Profile
     {
-        public AdvertProfile()
+        public MappingProfile()
         {
             CreateMap<Advert, AdvertDao>();
         }

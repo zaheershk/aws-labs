@@ -24,7 +24,7 @@ namespace WebAdvert.Web.Pages.Auth
         {
             if (User.Identity.IsAuthenticated)
             {
-                return RedirectToPage("/Index");
+                return RedirectToPage("/advertmanagement/advert");
             }
 
             return Page();

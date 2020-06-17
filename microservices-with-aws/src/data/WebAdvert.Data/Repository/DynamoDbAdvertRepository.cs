@@ -87,7 +87,7 @@ namespace WebAdvert.Data.Repository
             Console.WriteLine("Health check in progress.");
 
             using var client = new AmazonDynamoDBClient();
-            var tableData = await client.DescribeTableAsync("Adverts");
+            var tableData = await client.DescribeTableAsync("sz-webadvert-adverts");
 
             return string.Compare(tableData.Table.TableStatus, "active", true) == 0;
         }

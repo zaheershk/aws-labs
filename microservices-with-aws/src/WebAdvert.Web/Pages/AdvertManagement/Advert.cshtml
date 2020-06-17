@@ -1,0 +1,52 @@
+﻿@page "/advertmanagement/advert"
+@model WebAdvert.Web.Pages.AdvertManagement.AdvertModel
+@{
+    ViewData["Title"] = "Create Advert";
+}
+
+<h1>Create Advert</h1>
+<span>Add your advert details here.</span>
+<br />
+<br />
+
+<form method="post" enctype="multipart/form-data">
+    <div class="form-group row mb-1">
+        <label class="col-sm-2 col-form-label" asp-for="Input.Title"></label>
+        <div class="col-sm-3">
+            <input class="form-control" asp-for="Input.Title" />
+            <span class="text-danger" asp-validation-for="Input.Title"></span>
+        </div>
+    </div>
+
+    <div class="form-group row mb-1">
+        <label class="col-sm-2 col-form-label" asp-for="Input.Description"></label>
+        <div class="col-sm-3">
+            <input class="form-control" asp-for="Input.Description" />
+            <span class="text-danger" asp-validation-for="Input.Description"></span>
+        </div>
+    </div>
+
+    <div class="form-group row mb-1">
+        <label class="col-sm-2 col-form-label" asp-for="Input.Price"></label>
+        <div class="col-sm-3">
+            <input class="form-control" asp-for="Input.Price" />
+            <span class="text-danger" asp-validation-for="Input.Price"></span>
+        </div>
+    </div>
+
+    <br />
+    <div class="form-group row mb-1">
+        <div class="col-sm-3">
+            <input type="file" asp-for="ImageFile" name="imageFile" value="Upload an image" />
+        </div>
+    </div>
+
+    <br />
+    <br />
+    <div class="form-group row mb-1">
+        <div class="col-sm-2">
+            <button type="submit" class="btn btn-primary">Create</button>
+        </div>
+    </div>
+</form>
+

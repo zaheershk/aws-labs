@@ -31,11 +31,11 @@ Resources:
           RequireSymbols: False
           RequireUppercase: False
           TemporaryPasswordValidityDays: 7
-      UserPoolName: up-webadvert
+      UserPoolName: sz-webadvert-userpool
   CognitoUserPoolAppClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
-      ClientName: appclient-webadvert-browser
+      ClientName: sz-webadvert-appclient-browser
       UserPoolId: !Ref CognitoUserPool
       ExplicitAuthFlows:
         - ALLOW_ADMIN_USER_PASSWORD_AUTH
@@ -56,7 +56,13 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-      TableName: Adverts
+      TableName: sz-webadvert-adverts
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: sz-webadvert-images
+      VersioningConfiguration:
+        Status: Suspended
 Outputs:
   CognitoUserPool:
     Value: !Ref CognitoUserPool

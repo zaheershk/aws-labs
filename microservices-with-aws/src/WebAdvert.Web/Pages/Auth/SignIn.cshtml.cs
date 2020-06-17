@@ -30,7 +30,7 @@ namespace WebAdvert.Web.Pages.Auth
             var isValid = ModelState.IsValid && await ExecuteAsync();
             if (isValid)
             {
-                return RedirectToPage("/Index");
+                return RedirectToPage("/advertmanagement/advert");
             }
 
             // If we got this far, something failed, redisplay form

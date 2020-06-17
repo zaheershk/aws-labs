@@ -4,9 +4,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using WebAdvert.API.HealthChecks;
-using WebAdvert.Data.Repository;
 
-namespace WebAdvert.API
+namespace Files.API
 {
     public class Startup
     {
@@ -20,14 +19,15 @@ namespace WebAdvert.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDefaultAWSOptions(Configuration.GetAWSOptions());
+
             // register dependencies
-            services.AddTransient<IAdvertRepository, DynamoDbAdvertRepository>();
-            services.AddTransient<RepositoryHealthCheck>();
+            services.AddTransient<S3HealthCheck>();
 
             services.AddControllers();
 
             services.AddHealthChecks()
-                .AddCheck<RepositoryHealthCheck>("Repository");
+                .AddCheck<S3HealthCheck>("S3");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

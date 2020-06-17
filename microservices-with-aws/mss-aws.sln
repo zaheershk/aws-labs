@@ -31,6 +31,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebAdvert.Models", "src\models\WebAdvert.Models\WebAdvert.Models.csproj", "{59F4FCFD-966D-4A70-8D7F-487623E3F980}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Files.API", "src\services\Files.API\Files.API.csproj", "{00FC9643-4EBC-40ED-9E48-06E61C1FE6FF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,6 +55,10 @@ Global
 		{59F4FCFD-966D-4A70-8D7F-487623E3F980}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{59F4FCFD-966D-4A70-8D7F-487623E3F980}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{59F4FCFD-966D-4A70-8D7F-487623E3F980}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00FC9643-4EBC-40ED-9E48-06E61C1FE6FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00FC9643-4EBC-40ED-9E48-06E61C1FE6FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00FC9643-4EBC-40ED-9E48-06E61C1FE6FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00FC9643-4EBC-40ED-9E48-06E61C1FE6FF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -65,6 +71,7 @@ Global
 		{F2AFE799-D9DF-4285-9FB6-8BE679B6F046} = {5099DE02-FF49-4F22-AEF0-FDD9FC65A2A4}
 		{7C937820-C394-4724-A42B-871F4D836BC3} = {719192BF-B1B2-4D2E-94ED-484BDA191B82}
 		{59F4FCFD-966D-4A70-8D7F-487623E3F980} = {26C8D851-C240-435A-B1E3-E6A84BBB65C9}
+		{00FC9643-4EBC-40ED-9E48-06E61C1FE6FF} = {E5AC16BD-9757-4398-BFB3-3CCB6316978E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {930559C9-BB53-430E-9FA1-828124CE271E}

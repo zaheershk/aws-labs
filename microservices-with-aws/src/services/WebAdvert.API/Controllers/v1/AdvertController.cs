@@ -60,13 +60,14 @@ namespace WebAdvert.API.Controllers.v1
         {
             // create record
             var id = await _advertRepository.AddAsync(model);
-            return CreatedAtAction(nameof(GetAsync), new { id }, model);
+            return CreatedAtAction(nameof(GetAsync), new { id },
+                new ServiceResponse<Advert>(model));
         }
 
         [HttpPut]
         [Route("confirm")]
         [ProducesResponseType(typeof(ServiceResponse<Advert>), 404)]
-        [ProducesResponseType(typeof(ServiceResponse<Advert>), 200)]
+        [ProducesResponseType(200)]
         public async Task<IActionResult> ConfirmAsync(ConfirmAdvert model)
         {
             try
