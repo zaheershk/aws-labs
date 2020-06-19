@@ -1,0 +1,22 @@
+version: '3.4'
+
+services:
+  webadvert.web:
+    image: ${DOCKER_REGISTRY-}webadvertweb
+    build:
+      context: .
+      dockerfile: src/WebAdvert.Web/Dockerfile
+
+  files.api:
+    image: ${DOCKER_REGISTRY-}filesapi
+    build:
+      context: .
+      dockerfile: src/services/Files.API/Dockerfile
+
+
+  webadvert.api:
+    image: ${DOCKER_REGISTRY-}webadvertapi
+    build:
+      context: .
+      dockerfile: src/services/WebAdvert.API/Dockerfile
+

@@ -8,6 +8,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "setup", "setup", "{A454188F
 		setup\build.yml = setup\build.yml
 		setup\delete-stack.sh = setup\delete-stack.sh
 		setup\deploy-stack.sh = setup\deploy-stack.sh
+		run-in-docker.sh = run-in-docker.sh
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{5099DE02-FF49-4F22-AEF0-FDD9FC65A2A4}"
@@ -31,7 +32,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebAdvert.Models", "src\models\WebAdvert.Models\WebAdvert.Models.csproj", "{59F4FCFD-966D-4A70-8D7F-487623E3F980}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Files.API", "src\services\Files.API\Files.API.csproj", "{00FC9643-4EBC-40ED-9E48-06E61C1FE6FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Files.API", "src\services\Files.API\Files.API.csproj", "{00FC9643-4EBC-40ED-9E48-06E61C1FE6FF}"
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{5C19C385-1C34-4AFD-ACB3-941DA3F5B2D1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,6 +62,10 @@ Global
 		{00FC9643-4EBC-40ED-9E48-06E61C1FE6FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{00FC9643-4EBC-40ED-9E48-06E61C1FE6FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{00FC9643-4EBC-40ED-9E48-06E61C1FE6FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C19C385-1C34-4AFD-ACB3-941DA3F5B2D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C19C385-1C34-4AFD-ACB3-941DA3F5B2D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C19C385-1C34-4AFD-ACB3-941DA3F5B2D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C19C385-1C34-4AFD-ACB3-941DA3F5B2D1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
